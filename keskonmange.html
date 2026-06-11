@@ -12,296 +12,411 @@
 <style>
 :root {
   --purple:#6C5CE7; --purple-dark:#5A4BD1; --pink:#FD79A8;
-  --yellow:#FFEAA7; --mint:#55EFC4; --blue:#74B9FF;
-  --orange:#FAB1A0; --red:#FF6B6B;
+  --yellow:#FFEAA7; --mint:#55EFC4; --red:#FF6B6B;
   --ink:#2D3436; --ink-light:#636E72;
   --cream:#FFF9F0; --white:#FFFFFF; --light:#F0F0F0;
   --shadow-sm:0 2px 8px rgba(45,52,54,0.07);
   --shadow:0 4px 16px rgba(45,52,54,0.1);
-  --shadow-lg:0 8px 30px rgba(108,92,231,0.2);
   --radius:20px; --radius-sm:14px; --radius-xs:10px;
   --title:'Fredoka',sans-serif; --body:'Nunito',sans-serif;
-  --nav-h:64px;
-  --sat: env(safe-area-inset-top);
-  --sab: env(safe-area-inset-bottom);
+  --nav-h:56px;
+  /* Safe areas iOS */
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 
-/* FIX PWA : on utilise 100dvh pour couvrir tout l'écran y compris en mode standalone */
-html{height:100%;height:100dvh;}
+/* Reset */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+button{font-family:var(--body);}
+
+/* ======================
+   LAYOUT PWA-SAFE
+   La clé : body = colonne avec nav EN BAS
+   On n'utilise PAS fixed/absolute pour la nav
+   ====================== */
+html{
+  height:100%; height:100dvh;
+  overflow:hidden;
+}
 body{
-  height:100%;height:100dvh;
-  font-family:var(--body);background:var(--cream);color:var(--ink);
-  overscroll-behavior:none;display:flex;flex-direction:column;
-  max-width:600px;margin:0 auto;position:relative;overflow:hidden;
+  height:100%; height:100dvh;
+  display:flex; flex-direction:column;
+  font-family:var(--body); background:var(--cream); color:var(--ink);
+  overscroll-behavior:none;
+  max-width:600px; margin:0 auto;
+  overflow:hidden;
+}
+
+/* Zone de contenu = tout sauf la nav */
+#app-content{
+  flex:1; display:flex; flex-direction:column;
+  overflow:hidden; min-height:0;
 }
 
 /* VIEWS */
 .view{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;}
 .view.active{display:flex;}
-.view-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.view-scroll{
+  flex:1;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
 
-/* NAV */
+/* ======================
+   NAV — toujours en bas
+   ====================== */
 .nav{
-  display:flex;flex-shrink:0;
-  height:calc(var(--nav-h) + var(--sab));
+  flex-shrink:0;
+  display:flex;
+  background:var(--white);
+  border-top:1px solid var(--light);
+  /* Hauteur = nav + home indicator */
   padding-bottom:var(--sab);
-  background:var(--white);border-top:1px solid var(--light);z-index:50;
+  min-height:calc(var(--nav-h) + var(--sab));
+  /* Sécurité : toujours visible */
+  position:relative; z-index:100;
 }
 .nav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;cursor:pointer;color:var(--ink-light);font-size:10px;font-weight:700;
-  font-family:var(--body);transition:color .15s;border:none;background:none;
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;
+  min-height:var(--nav-h);
+  cursor:pointer;color:var(--ink-light);
+  font-size:11px;font-weight:700;
+  border:none;background:none;
+  transition:color .12s;
+  padding:0;
+  /* Zone tactile min Apple HIG */
+  min-width:44px;
 }
 .nav-item.active{color:var(--purple);}
-.nav-icon{font-size:22px;line-height:1;}
+.nav-icon{font-size:24px;line-height:1;}
 
-/* HEADER */
+/* ======================
+   PAGE HEADERS
+   Respecte le Dynamic Island (sat)
+   ====================== */
 .page-header{
-  padding:calc(var(--sat) + 14px) 20px 14px;
-  display:flex;align-items:center;justify-content:space-between;
   flex-shrink:0;
+  padding-top:calc(var(--sat) + 14px);
+  padding-bottom:14px;
+  padding-left:20px; padding-right:20px;
+  display:flex;align-items:center;justify-content:space-between;
 }
 .page-title{font-family:var(--title);font-size:24px;font-weight:700;}
 .hdr-btn{
-  width:38px;height:38px;border-radius:var(--radius-xs);
+  min-width:44px;min-height:44px;border-radius:var(--radius-xs);
   background:rgba(255,255,255,0.2);border:none;color:white;
-  font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
 }
-.hdr-btn:active{transform:scale(0.9);}
+.hdr-btn:active{opacity:.7;}
 
-/* ========= PLANNING ========= */
-.plan-list{padding:12px 16px 0;}
+/* ======================
+   PLANNING
+   ====================== */
+.plan-list{padding:14px 16px 0;}
 .plan-card{
   display:flex;align-items:center;gap:12px;
   background:var(--white);border-radius:var(--radius-sm);
-  padding:14px;margin-bottom:10px;box-shadow:var(--shadow-sm);
-  cursor:pointer;transition:transform .1s;
+  padding:14px;margin-bottom:10px;
+  box-shadow:var(--shadow-sm);cursor:pointer;
+  transition:transform .1s,opacity .1s;
+  min-height:72px;
 }
-.plan-card:active{transform:scale(0.98);}
+.plan-card:active{transform:scale(0.97);opacity:.9;}
 .plan-card-color{
-  width:48px;height:48px;border-radius:12px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:24px;
+  width:50px;height:50px;border-radius:13px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:26px;
 }
 .plan-card-info{flex:1;min-width:0;}
-.plan-card-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.plan-card-meta{font-size:12px;color:var(--ink-light);font-weight:600;margin-top:2px;}
+.plan-card-name{font-size:15px;font-weight:700;line-height:1.3;word-break:break-word;}
+.plan-card-meta{font-size:12px;color:var(--ink-light);font-weight:600;margin-top:3px;}
 .plan-card-del{
-  width:30px;height:30px;border-radius:8px;background:var(--light);
-  border:none;color:var(--ink-light);cursor:pointer;font-size:13px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  min-width:44px;min-height:44px;border-radius:10px;
+  background:var(--light);border:none;color:var(--ink-light);
+  cursor:pointer;font-size:16px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
 }
 .plan-card-del:active{background:#FFE0E0;color:var(--red);}
-.plan-bottom{padding:14px 16px 20px;}
+.plan-bottom{padding:16px 16px 24px;}
 .gen-btn{
-  width:100%;padding:16px;border:none;border-radius:var(--radius-sm);
+  width:100%;padding:17px;border:none;border-radius:var(--radius-sm);
   background:var(--mint);color:var(--ink);font-family:var(--title);
-  font-size:16px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);
+  font-size:17px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);
+  min-height:54px;
 }
-.gen-btn:active{transform:scale(0.98);}
+.gen-btn:active{opacity:.85;transform:scale(0.98);}
 
-/* ========= RECETTES ========= */
-.recettes-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;}
-.rcard{
-  background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);
-  overflow:hidden;cursor:pointer;transition:transform .1s;
+/* ======================
+   RECETTES
+   ====================== */
+.recettes-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;
 }
-.rcard:active{transform:scale(0.97);}
-.rcard-color{height:80px;display:flex;align-items:center;justify-content:center;font-size:36px;}
-.rcard-body{padding:10px 12px 12px;}
+.rcard{
+  background:var(--white);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);overflow:hidden;cursor:pointer;
+  transition:transform .1s,opacity .1s;
+}
+.rcard:active{transform:scale(0.96);opacity:.9;}
+.rcard-color{height:84px;display:flex;align-items:center;justify-content:center;font-size:38px;}
+.rcard-body{padding:10px 12px 14px;}
 .rcard-name{font-size:14px;font-weight:700;line-height:1.3;}
 .rcard-meta{font-size:11px;color:var(--ink-light);margin-top:4px;font-weight:600;}
 
 /* EMPTY */
-.empty-msg{text-align:center;padding:60px 30px;color:var(--ink-light);}
-.empty-emoji{font-size:48px;margin-bottom:12px;}
-.empty-text{font-size:15px;font-weight:600;line-height:1.5;}
+.empty-msg{text-align:center;padding:70px 30px;color:var(--ink-light);}
+.empty-emoji{font-size:52px;margin-bottom:14px;}
+.empty-text{font-size:16px;font-weight:600;line-height:1.6;}
 
-/* ========= COURSES ========= */
-.courses-header-bar{
-  padding:12px 16px 8px;display:flex;gap:8px;align-items:center;
+/* ======================
+   COURSES
+   ====================== */
+.courses-bar{
+  flex-shrink:0;padding:12px 16px 8px;
+  display:flex;gap:8px;align-items:center;
   background:var(--white);border-bottom:1px solid var(--light);
-  flex-shrink:0;position:relative;
+  position:relative;
 }
-.courses-search{
-  flex:1;padding:10px 14px;border:2px solid var(--light);
+.courses-input{
+  flex:1;padding:11px 14px;border:2px solid var(--light);
   border-radius:var(--radius-sm);font-family:var(--body);
-  font-size:15px;font-weight:600;color:var(--ink);outline:none;background:var(--cream);
+  font-size:16px;font-weight:600;color:var(--ink);outline:none;
+  background:var(--cream); min-height:44px;
 }
-.courses-search:focus{border-color:var(--purple);}
-.courses-add-btn{
-  width:44px;height:44px;border-radius:var(--radius-sm);
-  background:var(--mint);border:none;color:var(--ink);font-size:24px;cursor:pointer;flex-shrink:0;
+.courses-input:focus{border-color:var(--purple);}
+.courses-add{
+  min-width:44px;min-height:44px;border-radius:var(--radius-sm);
+  background:var(--mint);border:none;color:var(--ink);
+  font-size:26px;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
 }
-.progress-strip{padding:8px 16px;background:var(--white);border-bottom:1px solid var(--light);flex-shrink:0;}
-.progress-bar{height:6px;background:var(--light);border-radius:10px;overflow:hidden;}
-.progress-fill{height:100%;background:var(--mint);border-radius:10px;transition:width .3s;}
-.progress-label{font-size:11px;font-weight:700;color:var(--ink-light);margin-top:4px;}
+.courses-add:active{opacity:.8;}
 
-.rayon-group{margin:12px 16px 0;}
-.rayon-title{font-family:var(--title);font-size:13px;font-weight:600;color:var(--ink-light);padding:6px 0;display:flex;align-items:center;gap:6px;}
+.prog-strip{
+  flex-shrink:0;padding:8px 16px 6px;
+  background:var(--white);border-bottom:1px solid var(--light);
+}
+.prog-bar{height:6px;background:var(--light);border-radius:10px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--mint);border-radius:10px;transition:width .35s ease;}
+.prog-label{font-size:11px;font-weight:700;color:var(--ink-light);margin-top:5px;}
+
+.rayon-group{margin:10px 16px 0;}
+.rayon-title{
+  font-family:var(--title);font-size:13px;font-weight:600;
+  color:var(--ink-light);padding:5px 0 7px;
+  display:flex;align-items:center;gap:6px;
+}
+
+/* Course item — swipe delete */
+.ci-wrap{position:relative;overflow:hidden;border-radius:var(--radius-xs);margin-bottom:7px;}
+.ci-swipe-bg{
+  position:absolute;right:0;top:0;bottom:0;width:80px;
+  background:var(--red);border-radius:var(--radius-xs);
+  display:flex;align-items:center;justify-content:center;
+  color:white;font-size:20px;font-weight:700;
+}
 .course-item{
   display:flex;align-items:center;gap:10px;
   background:var(--white);border-radius:var(--radius-xs);
-  padding:12px;margin-bottom:6px;box-shadow:var(--shadow-sm);
+  padding:13px 12px;
+  box-shadow:var(--shadow-sm);
   position:relative;overflow:hidden;
+  transition:transform .2s ease, opacity .15s;
+  will-change:transform;
 }
-.course-item.checked{opacity:0.45;}
+.course-item.checked{opacity:.45;}
 .course-item.checked .ci-name{text-decoration:line-through;}
 .ci-bar{position:absolute;left:0;top:0;bottom:0;width:4px;}
 .ci-check{
-  width:24px;height:24px;border-radius:8px;flex-shrink:0;
-  border:2.5px solid var(--ink-light);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .12s;
+  min-width:26px;min-height:26px;border-radius:8px;flex-shrink:0;
+  border:2.5px solid #ccc;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
 }
 .ci-check.checked{background:var(--mint);border-color:var(--mint);}
-.ci-info{flex:1;cursor:pointer;}
-.ci-name{font-size:15px;font-weight:700;}
-.ci-qty{font-size:12px;color:var(--ink-light);font-weight:600;margin-top:1px;}
+.ci-info{flex:1;cursor:pointer;padding:2px 0;}
+.ci-name{font-size:15px;font-weight:700;line-height:1.3;}
+.ci-qty{font-size:12px;color:var(--ink-light);font-weight:600;margin-top:2px;}
 .ci-del{
-  width:28px;height:28px;border-radius:8px;background:var(--light);
-  border:none;color:var(--ink-light);cursor:pointer;font-size:13px;
+  min-width:36px;min-height:44px;border-radius:8px;
+  background:transparent;border:none;
+  color:#ccc;cursor:pointer;font-size:18px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
+.ci-del:active{color:var(--red);}
 
 .fab-bottom{
-  flex-shrink:0;padding:10px 16px calc(var(--sab) + 10px);
-  background:linear-gradient(transparent,var(--cream) 30%);
+  flex-shrink:0;padding:10px 16px 12px;
+  background:linear-gradient(transparent,var(--cream) 35%);
   display:none;
 }
-.fab-bottom-btn{
+.fab-btn{
   width:100%;padding:14px;border:none;border-radius:var(--radius-sm);
-  font-family:var(--body);font-weight:700;font-size:14px;cursor:pointer;color:var(--ink);
+  font-family:var(--body);font-weight:700;font-size:14px;
+  cursor:pointer;color:var(--ink);background:var(--light);
+  min-height:48px;
 }
+.fab-btn:active{opacity:.8;}
 
-/* ========= FICHE RECETTE ========= */
+/* ======================
+   FICHE RECETTE (modale)
+   ====================== */
 .recipe-modal{
   position:fixed;inset:0;z-index:200;
-  background:rgba(45,52,54,0.5);backdrop-filter:blur(4px);
+  background:rgba(45,52,54,0.55);backdrop-filter:blur(6px);
   display:none;align-items:flex-end;justify-content:center;
 }
 .recipe-modal.show{display:flex;}
 .recipe-sheet{
   background:var(--cream);width:100%;max-width:600px;
-  border-radius:28px 28px 0 0;max-height:92vh;
+  border-radius:28px 28px 0 0;
+  /* Laisse de la place pour le Dynamic Island */
+  max-height:calc(100dvh - var(--sat) - 8px);
   display:flex;flex-direction:column;overflow:hidden;
-  animation:slideUp .25s ease;
+  animation:slideUp .28s cubic-bezier(.25,.46,.45,.94);
 }
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+/* Header fiche : pas de safe-area-top ici car la modale monte depuis le bas */
 .recipe-header{
-  padding:16px 20px 12px;display:flex;align-items:center;gap:12px;
-  border-bottom:1px solid var(--light);flex-shrink:0;
+  flex-shrink:0;
+  padding:18px 20px 14px;
+  display:flex;align-items:flex-start;gap:12px;
+  border-bottom:1px solid var(--light);
 }
 .recipe-back{
-  width:36px;height:36px;border-radius:50%;background:var(--light);
-  border:none;font-size:18px;cursor:pointer;flex-shrink:0;
+  min-width:44px;min-height:44px;border-radius:50%;
+  background:var(--light);border:none;font-size:20px;
+  cursor:pointer;flex-shrink:0;margin-top:-4px;
   display:flex;align-items:center;justify-content:center;
 }
+.recipe-back:active{background:#ddd;}
 .recipe-header-info{flex:1;min-width:0;}
-.recipe-name-modal{font-family:var(--title);font-size:20px;font-weight:700;line-height:1.2;}
-.recipe-meta-modal{font-size:12px;color:var(--ink-light);margin-top:3px;font-weight:600;}
-.recipe-scroll{flex:1;overflow-y:auto;padding:0 20px 20px;}
-.recipe-section-title{
+.recipe-name-modal{
+  font-family:var(--title);font-size:21px;font-weight:700;
+  line-height:1.25;word-break:break-word;
+}
+.recipe-meta-modal{font-size:12px;color:var(--ink-light);margin-top:4px;font-weight:600;}
+.recipe-scroll{flex:1;overflow-y:auto;padding:0 20px 24px;-webkit-overflow-scrolling:touch;}
+
+.section-title{
   font-family:var(--title);font-size:15px;font-weight:700;
   color:var(--purple);margin:18px 0 10px;
 }
 .ing-row{
   display:flex;align-items:center;gap:10px;
-  padding:8px 0;border-bottom:1px solid var(--light);
+  padding:9px 0;border-bottom:1px solid var(--light);
   font-size:14px;font-weight:600;
 }
-.ing-qty{color:var(--purple);font-weight:700;min-width:60px;}
+.ing-qty{color:var(--purple);font-weight:700;min-width:65px;font-size:13px;}
 .step-row{
   display:flex;gap:10px;padding:10px 0;
-  border-bottom:1px solid var(--light);font-size:14px;font-weight:600;line-height:1.5;
+  border-bottom:1px solid var(--light);font-size:14px;font-weight:600;line-height:1.55;
 }
 .step-num{
-  width:26px;height:26px;border-radius:50%;
+  min-width:28px;min-height:28px;border-radius:50%;
   background:var(--purple);color:white;font-size:12px;font-weight:700;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
 }
-.add-to-plan-btn{
+.plan-add-btn{
   width:100%;padding:14px;border:none;border-radius:var(--radius-sm);
   background:var(--yellow);color:var(--ink);font-family:var(--title);
-  font-size:15px;font-weight:700;cursor:pointer;margin-top:12px;
+  font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;min-height:50px;
 }
-.cook-btn{
+.plan-add-btn:active{opacity:.8;}
+.cook-launch-btn{
   width:100%;padding:16px;border:none;border-radius:var(--radius-sm);
   background:var(--purple);color:white;font-family:var(--title);
-  font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;margin-bottom:20px;
+  font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;
+  margin-bottom:24px;min-height:54px;
 }
+.cook-launch-btn:active{background:var(--purple-dark);}
 
-/* ========= MODE CUISINE ========= */
+/* ======================
+   MODE CUISINE
+   ====================== */
 .cook-modal{
   position:fixed;inset:0;z-index:300;
   background:var(--ink);color:white;
   display:none;flex-direction:column;
+  /* Respecte le Dynamic Island */
+  padding-top:var(--sat);
 }
 .cook-modal.show{display:flex;}
 
-/* Header cuisine : 2 lignes pour éviter chevauchement */
-.cook-header{
-  padding:calc(var(--sat) + 12px) 16px 0;
-  flex-shrink:0;
+.cook-header{flex-shrink:0;padding:14px 16px 0;}
+.cook-row1{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px;
 }
-.cook-header-row1{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:8px;gap:8px;
+.cook-title{
+  font-family:var(--title);font-size:17px;font-weight:700;
+  flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.cook-title{font-family:var(--title);font-size:17px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cook-header-btns{display:flex;gap:6px;flex-shrink:0;}
-.cook-hbtn{
-  background:rgba(255,255,255,0.15);border:none;color:white;
-  padding:7px 12px;border-radius:20px;font-size:12px;font-weight:700;
-  cursor:pointer;font-family:var(--body);white-space:nowrap;
+.cook-btn-sm{
+  background:rgba(255,255,255,0.14);border:none;color:white;
+  padding:8px 13px;border-radius:20px;font-size:12px;font-weight:700;
+  cursor:pointer;white-space:nowrap;min-height:36px;
 }
+.cook-btn-sm:active{opacity:.7;}
 
-/* Timer persistant visible entre les étapes */
-.cook-timer-bar{
+/* Timer persistant */
+.cook-timer-strip{
   display:none;align-items:center;justify-content:center;gap:10px;
-  background:rgba(255,210,63,0.15);border-radius:12px;
-  padding:8px 16px;margin-bottom:8px;
+  background:rgba(255,210,63,0.13);border-radius:12px;
+  padding:8px 14px;margin-bottom:8px;
 }
-.cook-timer-bar.running{display:flex;}
-.cook-timer-count{font-size:24px;font-weight:700;font-family:var(--title);color:var(--yellow);}
-.cook-timer-stop{background:rgba(255,255,255,0.15);border:none;color:white;padding:5px 10px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--body);}
+.cook-timer-strip.on{display:flex;}
+.cook-timer-num{font-size:26px;font-weight:700;font-family:var(--title);color:var(--yellow);letter-spacing:1px;}
+.cook-timer-stop{
+  background:rgba(255,255,255,0.12);border:none;color:white;
+  padding:5px 10px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;
+}
 
-.cook-progress-row{display:flex;align-items:center;gap:10px;padding-bottom:12px;}
-.cook-step-label{font-size:11px;font-weight:700;opacity:0.6;white-space:nowrap;}
-.cook-bar{flex:1;height:4px;background:rgba(255,255,255,0.15);border-radius:10px;}
-.cook-bar-fill{height:100%;background:var(--mint);border-radius:10px;transition:width .3s;}
+.cook-prog-row{display:flex;align-items:center;gap:10px;padding-bottom:10px;}
+.cook-step-lbl{font-size:11px;font-weight:700;opacity:.55;white-space:nowrap;}
+.cook-prog-bar{flex:1;height:4px;background:rgba(255,255,255,0.12);border-radius:10px;}
+.cook-prog-fill{height:100%;background:var(--mint);border-radius:10px;transition:width .3s;}
 
+.cook-ings{
+  display:none;flex-shrink:0;
+  padding:0 16px 8px;max-height:30dvh;overflow-y:auto;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
 .cook-body{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:20px 30px;text-align:center;
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px 28px;text-align:center;
 }
-.cook-step-num{font-size:13px;font-weight:700;color:var(--mint);margin-bottom:10px;}
-.cook-step-text{font-size:20px;font-weight:700;line-height:1.55;max-width:400px;}
-.cook-timer-area{margin-top:24px;}
-.cook-timer-btn{
-  padding:12px 28px;border-radius:50px;
+.cook-step-tag{font-size:13px;font-weight:700;color:var(--mint);margin-bottom:10px;letter-spacing:1px;}
+.cook-step-txt{font-size:21px;font-weight:700;line-height:1.55;max-width:420px;}
+.cook-timer-zone{margin-top:26px;}
+.cook-timer-launch{
+  padding:13px 30px;border-radius:50px;
   background:var(--pink);border:none;color:white;
   font-family:var(--title);font-size:15px;font-weight:700;cursor:pointer;
 }
+.cook-timer-launch:active{opacity:.8;}
 
-.cook-ings-panel{
-  display:none;padding:0 16px 8px;max-height:28vh;overflow-y:auto;flex-shrink:0;
-}
 .cook-nav{
-  display:flex;gap:12px;padding:12px 16px;
-  padding-bottom:calc(var(--sab) + 12px);flex-shrink:0;
+  flex-shrink:0;display:flex;gap:10px;
+  padding:12px 16px calc(var(--sab) + 12px);
 }
 .cook-nav-btn{
-  flex:1;padding:15px;border-radius:var(--radius-sm);
+  flex:1;padding:16px;border-radius:var(--radius-sm);
   border:none;font-family:var(--title);font-size:15px;font-weight:700;cursor:pointer;
+  min-height:52px;
 }
-.cook-prev{background:rgba(255,255,255,0.1);color:white;}
+.cook-prev{background:rgba(255,255,255,0.09);color:white;}
 .cook-next{background:var(--mint);color:var(--ink);}
+.cook-prev:active,.cook-next:active{opacity:.8;}
 
-/* ========= MODALS ========= */
+/* ======================
+   MODALES GÉNÉRIQUES
+   ====================== */
 .modal-overlay{
   position:fixed;inset:0;z-index:250;
-  background:rgba(45,52,54,0.5);backdrop-filter:blur(4px);
+  background:rgba(45,52,54,0.55);backdrop-filter:blur(6px);
   display:none;align-items:flex-end;justify-content:center;
 }
 .modal-overlay.show{display:flex;}
@@ -309,71 +424,85 @@ body{
   background:var(--cream);width:100%;max-width:600px;
   border-radius:28px 28px 0 0;padding:24px 20px;
   padding-bottom:calc(var(--sab) + 24px);
-  animation:slideUp .25s ease;max-height:80vh;overflow-y:auto;
+  animation:slideUp .25s ease;max-height:80dvh;overflow-y:auto;
 }
-.modal-title{font-family:var(--title);font-size:22px;font-weight:700;margin-bottom:4px;}
-.modal-sub{font-size:14px;color:var(--ink-light);font-weight:600;margin-bottom:18px;}
+.modal-title{font-family:var(--title);font-size:22px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:14px;color:var(--ink-light);font-weight:600;margin-bottom:18px;line-height:1.5;}
 .modal-input,.modal-textarea{
   width:100%;border:2px solid var(--light);border-radius:var(--radius-xs);
-  padding:12px 14px;font-family:var(--body);font-size:15px;font-weight:600;
+  padding:13px 14px;font-family:var(--body);font-size:15px;font-weight:600;
   color:var(--ink);background:var(--white);outline:none;margin-bottom:12px;
+  min-height:48px;
 }
 .modal-input:focus,.modal-textarea:focus{border-color:var(--purple);}
-.modal-textarea{resize:vertical;min-height:120px;}
+.modal-textarea{resize:vertical;min-height:130px;font-size:14px;}
 .modal-btn{
   width:100%;padding:15px;border:none;border-radius:var(--radius-xs);
-  font-family:var(--body);font-weight:700;font-size:15px;cursor:pointer;margin-bottom:8px;
+  font-family:var(--body);font-weight:700;font-size:15px;
+  cursor:pointer;margin-bottom:8px;min-height:50px;
 }
 .btn-primary{background:var(--purple);color:white;}
 .btn-mint{background:var(--mint);color:var(--ink);}
 .btn-secondary{background:var(--light);color:var(--ink);}
 .btn-danger{background:var(--red);color:white;}
 
-/* ========= ONBOARDING ========= */
+/* ======================
+   ONBOARDING
+   ====================== */
 .onboarding{
   position:fixed;inset:0;z-index:500;background:var(--purple);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:30px;text-align:center;
+  padding:32px;text-align:center;
 }
 .onboarding.hidden{display:none;}
-.ob-emoji{font-size:72px;margin-bottom:16px;}
-.ob-title{font-family:var(--title);font-size:34px;font-weight:700;color:white;margin-bottom:8px;}
-.ob-sub{font-size:15px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:28px;line-height:1.5;}
+.ob-emoji{font-size:76px;margin-bottom:18px;}
+.ob-title{font-family:var(--title);font-size:36px;font-weight:700;color:white;margin-bottom:8px;}
+.ob-sub{font-size:15px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:30px;line-height:1.55;}
 .ob-input{
-  width:100%;max-width:300px;padding:15px;border:none;border-radius:var(--radius-xs);
+  width:100%;max-width:310px;padding:16px;border:none;border-radius:var(--radius-xs);
   font-family:var(--body);font-size:16px;font-weight:700;color:var(--ink);
-  margin-bottom:10px;text-align:center;outline:none;
+  margin-bottom:10px;text-align:center;outline:none;min-height:52px;
 }
 .ob-btn{
-  width:100%;max-width:300px;padding:16px;border:none;border-radius:var(--radius-xs);
+  width:100%;max-width:310px;padding:17px;border:none;border-radius:var(--radius-xs);
   background:var(--mint);color:var(--ink);font-family:var(--title);
-  font-weight:700;font-size:16px;cursor:pointer;margin-top:8px;
+  font-weight:700;font-size:17px;cursor:pointer;margin-top:8px;min-height:54px;
 }
+.ob-btn:active{opacity:.85;}
 
-/* ========= TOAST ========= */
+/* ======================
+   TOAST
+   ====================== */
 .toast{
-  position:fixed;bottom:calc(var(--nav-h) + var(--sab) + 16px);
-  left:50%;transform:translateX(-50%) translateY(20px);
+  position:fixed;
+  /* Au-dessus de la nav */
+  bottom:calc(var(--nav-h) + var(--sab) + 14px);
+  left:50%;transform:translateX(-50%) translateY(16px);
   background:var(--ink);color:white;padding:12px 22px;border-radius:50px;
   font-size:14px;font-weight:700;z-index:600;
-  opacity:0;transition:all .3s;pointer-events:none;
+  opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;
   box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap;
+  max-width:calc(100% - 40px);
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ========= AUTOCOMPLETE ========= */
+/* ======================
+   AUTOCOMPLETE
+   ====================== */
 .ac-list{
   position:absolute;left:0;right:0;top:100%;
   background:var(--white);border-radius:0 0 var(--radius-sm) var(--radius-sm);
-  box-shadow:var(--shadow-lg);max-height:200px;overflow-y:auto;z-index:40;display:none;
+  box-shadow:0 8px 24px rgba(45,52,54,0.14);
+  max-height:210px;overflow-y:auto;z-index:40;display:none;
 }
 .ac-list.show{display:block;}
 .ac-item{
-  padding:11px 14px;cursor:pointer;font-weight:600;font-size:14px;
-  display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--light);
+  padding:13px 14px;cursor:pointer;font-weight:600;font-size:14px;
+  display:flex;align-items:center;gap:9px;
+  border-bottom:1px solid var(--light);min-height:48px;
 }
 .ac-item:active{background:var(--light);}
-.ac-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ac-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -383,142 +512,63 @@ body{
   <div class="ob-emoji">🍳</div>
   <div class="ob-title">KeskonMange</div>
   <div class="ob-sub">Tes menus de la semaine<br>ta liste de courses partagée</div>
-  <input class="ob-input" id="ob-pseudo" placeholder="Ton prénom">
-  <input class="ob-input" id="ob-code" placeholder="Code groupe (ex: FAMILLE)">
+  <input class="ob-input" id="ob-pseudo" placeholder="Ton prénom" autocomplete="given-name">
+  <input class="ob-input" id="ob-code" placeholder="Code groupe (ex: FAMILLE)" autocomplete="off" style="text-transform:uppercase;">
   <button class="ob-btn" onclick="joinGroup()">C'est parti !</button>
 </div>
 
-<!-- VIEW: PLANNING -->
-<div class="view" id="view-planning">
-  <div class="page-header" style="background:var(--purple);color:white;">
-    <div class="page-title">📅 Planning</div>
-    <button class="hdr-btn" onclick="openImportMenu()" title="Importer">📥</button>
-  </div>
-  <div class="view-scroll">
-    <div class="plan-list" id="plan-list"></div>
-    <div class="plan-bottom">
-      <button class="gen-btn" onclick="generateCourses()">🛒 Générer la liste de courses</button>
+<!-- APP CONTENT (vues) -->
+<div id="app-content">
+
+  <!-- VIEW PLANNING -->
+  <div class="view" id="view-planning">
+    <div class="page-header" style="background:var(--purple);color:white;">
+      <div class="page-title">📅 Planning</div>
+      <button class="hdr-btn" onclick="openImport()" title="Importer">📥</button>
     </div>
-  </div>
-</div>
-
-<!-- VIEW: RECETTES -->
-<div class="view" id="view-recettes">
-  <div class="page-header" style="background:var(--purple);color:white;">
-    <div class="page-title">📖 Recettes</div>
-  </div>
-  <div class="view-scroll">
-    <div id="recettes-content"></div>
-  </div>
-</div>
-
-<!-- VIEW: COURSES -->
-<div class="view" id="view-courses">
-  <div class="page-header" style="background:var(--mint);color:var(--ink);">
-    <div class="page-title">🛒 Courses</div>
-    <button class="hdr-btn" style="color:var(--ink);" onclick="confirmClearAll()" title="Vider la liste">🗑</button>
-  </div>
-  <div class="courses-header-bar">
-    <input class="courses-search" id="courses-search" placeholder="Ajouter un article..."
-      autocomplete="off" oninput="onCoursesInput()" onkeydown="if(event.key==='Enter')addCourseManual()">
-    <button class="courses-add-btn" onclick="addCourseManual()">+</button>
-    <div class="ac-list" id="courses-ac"></div>
-  </div>
-  <div class="progress-strip">
-    <div class="progress-bar"><div class="progress-fill" id="c-progress"></div></div>
-    <div class="progress-label" id="c-progress-label">0 / 0 articles</div>
-  </div>
-  <div class="view-scroll" id="courses-scroll">
-    <div id="courses-list"></div>
-  </div>
-  <div class="fab-bottom" id="fab-clear-wrap">
-    <button class="fab-bottom-btn btn-secondary" onclick="clearCheckedCourses()">🗑 Retirer les cochés</button>
-  </div>
-</div>
-
-<!-- MODAL: FICHE RECETTE -->
-<div class="recipe-modal" id="recipe-modal" onclick="if(event.target===this)closeRecipeModal()">
-  <div class="recipe-sheet">
-    <div class="recipe-header">
-      <button class="recipe-back" onclick="closeRecipeModal()">←</button>
-      <div class="recipe-header-info">
-        <div class="recipe-name-modal" id="rm-name"></div>
-        <div class="recipe-meta-modal" id="rm-meta"></div>
+    <div class="view-scroll">
+      <div class="plan-list" id="plan-list"></div>
+      <div class="plan-bottom">
+        <button class="gen-btn" onclick="generateCourses()">🛒 Générer la liste de courses</button>
       </div>
     </div>
-    <div class="recipe-scroll" id="rm-body"></div>
   </div>
-</div>
 
-<!-- MODAL: IMPORT -->
-<div class="modal-overlay" id="modal-import" onclick="if(event.target===this)closeModal('modal-import')">
-  <div class="modal-sheet">
-    <div class="modal-title">📥 Importer des recettes</div>
-    <div class="modal-sub">Colle le JSON du menu de la semaine</div>
-    <textarea class="modal-textarea" id="import-json" placeholder='{"jours":[{"date":"2026-06-09","soir":{...}}]}'></textarea>
-    <button class="modal-btn btn-primary" onclick="doImportMenu()">Importer</button>
-    <button class="modal-btn btn-secondary" onclick="closeModal('modal-import')">Annuler</button>
-    <div id="import-result" style="font-size:13px;font-weight:600;margin-top:6px;"></div>
-  </div>
-</div>
-
-<!-- MODAL: QTY -->
-<div class="modal-overlay" id="modal-qty" onclick="if(event.target===this)closeModal('modal-qty')">
-  <div class="modal-sheet">
-    <div class="modal-title" id="qty-title">Quantité</div>
-    <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">Quantité</label>
-    <input class="modal-input" id="qty-value" type="number" inputmode="decimal" step="0.1">
-    <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">Unité</label>
-    <input class="modal-input" id="qty-unit" placeholder="g, kg, pièce...">
-    <button class="modal-btn btn-primary" onclick="saveQty()">Valider</button>
-    <button class="modal-btn btn-secondary" onclick="closeModal('modal-qty')">Annuler</button>
-  </div>
-</div>
-
-<!-- MODAL: CONFIRM CLEAR -->
-<div class="modal-overlay" id="modal-confirm" onclick="if(event.target===this)closeModal('modal-confirm')">
-  <div class="modal-sheet">
-    <div class="modal-title">Vider la liste ?</div>
-    <div class="modal-sub">Tous les articles seront supprimés définitivement.</div>
-    <button class="modal-btn btn-danger" onclick="clearAllCourses()">Oui, tout vider</button>
-    <button class="modal-btn btn-secondary" onclick="closeModal('modal-confirm')">Annuler</button>
-  </div>
-</div>
-
-<!-- MODE CUISINE -->
-<div class="cook-modal" id="cook-modal">
-  <div class="cook-header">
-    <div class="cook-header-row1">
-      <div class="cook-title" id="cook-name"></div>
-      <div class="cook-header-btns">
-        <button class="cook-hbtn" onclick="toggleCookIngs()">Ingrédients</button>
-        <button class="cook-hbtn" onclick="closeCookMode()">Quitter</button>
-      </div>
+  <!-- VIEW RECETTES -->
+  <div class="view" id="view-recettes">
+    <div class="page-header" style="background:var(--purple);color:white;">
+      <div class="page-title">📖 Recettes</div>
     </div>
-    <!-- Timer persistant -->
-    <div class="cook-timer-bar" id="cook-timer-bar">
-      <span style="font-size:13px;opacity:0.7;">⏱</span>
-      <span class="cook-timer-count" id="cook-timer-bar-count">0:00</span>
-      <button class="cook-timer-stop" onclick="stopTimer()">Arrêter</button>
-    </div>
-    <div class="cook-progress-row">
-      <span class="cook-step-label" id="cook-step-label">Étape 1/5</span>
-      <div class="cook-bar"><div class="cook-bar-fill" id="cook-bar-fill"></div></div>
+    <div class="view-scroll">
+      <div id="recettes-content"></div>
     </div>
   </div>
-  <div class="cook-ings-panel" id="cook-ings-panel"></div>
-  <div class="cook-body" id="cook-body">
-    <div class="cook-step-num" id="cook-sn"></div>
-    <div class="cook-step-text" id="cook-st"></div>
-    <div class="cook-timer-area" id="cook-timer-area"></div>
-  </div>
-  <div class="cook-nav">
-    <button class="cook-nav-btn cook-prev" onclick="cookPrev()">← Précédent</button>
-    <button class="cook-nav-btn cook-next" id="cook-next-btn" onclick="cookNext()">Suivant →</button>
-  </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <!-- VIEW COURSES -->
+  <div class="view" id="view-courses">
+    <div class="page-header" style="background:var(--mint);color:var(--ink);">
+      <div class="page-title">🛒 Courses</div>
+      <button class="hdr-btn" style="color:var(--ink);" onclick="confirmClearAll()">🗑</button>
+    </div>
+    <div class="courses-bar">
+      <input class="courses-input" id="courses-input" placeholder="Ajouter un article…"
+        autocomplete="off" oninput="onCoursesInput()" onkeydown="if(event.key==='Enter')addCourseManual()">
+      <button class="courses-add" onclick="addCourseManual()">+</button>
+      <div class="ac-list" id="courses-ac"></div>
+    </div>
+    <div class="prog-strip">
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="prog-label" id="prog-label">0 / 0 articles</div>
+    </div>
+    <div class="view-scroll" id="courses-scroll">
+      <div id="courses-list" style="padding-bottom:80px;"></div>
+    </div>
+    <div class="fab-bottom" id="fab-clear">
+      <button class="fab-btn" onclick="clearChecked()">🗑 Retirer les cochés</button>
+    </div>
+  </div>
+
+</div><!-- /app-content -->
 
 <!-- NAV -->
 <nav class="nav">
@@ -533,6 +583,87 @@ body{
   </button>
 </nav>
 
+<!-- MODAL FICHE RECETTE -->
+<div class="recipe-modal" id="recipe-modal" onclick="if(event.target===this)closeRecipe()">
+  <div class="recipe-sheet">
+    <div class="recipe-header">
+      <button class="recipe-back" onclick="closeRecipe()">←</button>
+      <div class="recipe-header-info">
+        <div class="recipe-name-modal" id="rm-name"></div>
+        <div class="recipe-meta-modal" id="rm-meta"></div>
+      </div>
+    </div>
+    <div class="recipe-scroll" id="rm-body"></div>
+  </div>
+</div>
+
+<!-- MODAL IMPORT -->
+<div class="modal-overlay" id="modal-import" onclick="if(event.target===this)closeModal('modal-import')">
+  <div class="modal-sheet">
+    <div class="modal-title">📥 Importer des recettes</div>
+    <div class="modal-sub">Colle le JSON du menu de la semaine</div>
+    <textarea class="modal-textarea" id="import-json" placeholder='{"jours":[{"date":"2026-06-09","soir":{"nom":"...","temps":30,...}}]}'></textarea>
+    <button class="modal-btn btn-primary" onclick="doImport()">Importer</button>
+    <button class="modal-btn btn-secondary" onclick="closeModal('modal-import')">Annuler</button>
+    <div id="import-result" style="font-size:13px;font-weight:600;margin-top:4px;"></div>
+  </div>
+</div>
+
+<!-- MODAL QTY -->
+<div class="modal-overlay" id="modal-qty" onclick="if(event.target===this)closeModal('modal-qty')">
+  <div class="modal-sheet">
+    <div class="modal-title" id="qty-nom">Quantité</div>
+    <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">Quantité</label>
+    <input class="modal-input" id="qty-val" type="number" inputmode="decimal" step="0.1">
+    <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">Unité</label>
+    <input class="modal-input" id="qty-unit" placeholder="g, kg, pièce…">
+    <button class="modal-btn btn-primary" onclick="saveQty()">Valider</button>
+    <button class="modal-btn btn-secondary" onclick="closeModal('modal-qty')">Annuler</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIRM CLEAR -->
+<div class="modal-overlay" id="modal-confirm" onclick="if(event.target===this)closeModal('modal-confirm')">
+  <div class="modal-sheet">
+    <div class="modal-title">Vider la liste ?</div>
+    <div class="modal-sub">Tous les articles seront supprimés définitivement. Cette action est irréversible.</div>
+    <button class="modal-btn btn-danger" onclick="clearAll()">Oui, tout vider</button>
+    <button class="modal-btn btn-secondary" onclick="closeModal('modal-confirm')">Annuler</button>
+  </div>
+</div>
+
+<!-- MODE CUISINE -->
+<div class="cook-modal" id="cook-modal">
+  <div class="cook-header">
+    <div class="cook-row1">
+      <div class="cook-title" id="cook-name"></div>
+      <button class="cook-btn-sm" onclick="toggleIngs()">Ingrédients</button>
+      <button class="cook-btn-sm" onclick="closeCook()">Quitter</button>
+    </div>
+    <div class="cook-timer-strip" id="timer-strip">
+      <span style="font-size:14px;">⏱</span>
+      <span class="cook-timer-num" id="timer-num">0:00</span>
+      <button class="cook-timer-stop" onclick="stopTimer()">Arrêter</button>
+    </div>
+    <div class="cook-prog-row">
+      <span class="cook-step-lbl" id="cook-lbl">Étape 1/5</span>
+      <div class="cook-prog-bar"><div class="cook-prog-fill" id="cook-prog"></div></div>
+    </div>
+  </div>
+  <div class="cook-ings" id="cook-ings"></div>
+  <div class="cook-body">
+    <div class="cook-step-tag" id="cook-tag"></div>
+    <div class="cook-step-txt" id="cook-txt"></div>
+    <div class="cook-timer-zone" id="cook-timer-zone"></div>
+  </div>
+  <div class="cook-nav">
+    <button class="cook-nav-btn cook-prev" onclick="cookPrev()">← Précédent</button>
+    <button class="cook-nav-btn cook-next" id="cook-next" onclick="cookNext()">Suivant →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -545,24 +676,22 @@ window.dispatchEvent(new Event('fbready'));
 </script>
 
 <script>
-// =============================================
+// ============================================================
 // STATE
-// =============================================
-let pseudo = localStorage.getItem('km2_pseudo')||'';
-let groupCode = localStorage.getItem('km2_group')||'';
-let currentView = 'planning';
-let planning = [];    // array of recette IDs dans le planning courant
-let recettes = {};    // { id: {nom,temps,personnes,ingredients,etapes} }
+// ============================================================
+let pseudo = localStorage.getItem('km_pseudo')||'';
+let groupCode = localStorage.getItem('km_group')||'';
+let planning = [];
+let recettes = {};
 let courses = {};
 let INGREDIENTS = [];
-let editingQtyId = null;
+let editQtyId = null;
 let cookRecipe = null;
 let cookStep = 0;
-let cookTimerInterval = null;
-let cookTimerSeconds = 0;
-let cookTimerRunning = false;
+let timerInterval = null;
+let timerSecs = 0;
+let timerRunning = false;
 let wakeLock = null;
-let currentRecipeId = null;
 
 const RAYONS = {
   0:{nom:'Fruits & Légumes',emoji:'🥕',color:'#4CAF50'},
@@ -576,293 +705,291 @@ const RAYONS = {
   8:{nom:'Divers',emoji:'📦',color:'#9CA3AF'}
 };
 const RAYON_ORDER = [0,1,2,4,3,5,6,7,8];
-const CARD_COLORS = ['#FFD23F','#74B9FF','#FD79A8','#55EFC4','#FAB1A0','#A29BFE','#FFEAA7','#81ECEC','#E17055','#00CEC9'];
+const COLORS = ['#FFD23F','#74B9FF','#FD79A8','#55EFC4','#FAB1A0','#A29BFE','#FFEAA7','#81ECEC','#E17055','#00CEC9'];
 const EMOJIS = ['🍝','🥗','🍗','🥘','🍲','🐟','🥩','🍜','🥑','🍕','🫔','🍛','🥙','🫕','🍱'];
 
-// =============================================
+// ============================================================
 // HELPERS
-// =============================================
-function fb(){ return window._fb; }
-function gp(p){ return `groupes/${groupCode}/${p}`; }
+// ============================================================
+const fb = ()=>window._fb;
+const gp = p=>`groupes/${groupCode}/${p}`;
 
 function toast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'),1800);
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800);
 }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-function cardColor(id){ return CARD_COLORS[id.charCodeAt(id.length-1)%CARD_COLORS.length]; }
+function vibrate(ms=30){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+function cardColor(id){ return COLORS[id.charCodeAt(id.length-1)%COLORS.length]; }
 function cardEmoji(id){ return EMOJIS[id.charCodeAt(2)%EMOJIS.length]; }
 
-// =============================================
-// FIREBASE
-// =============================================
-function connectDB(){
-  const {db,ref,onValue} = fb();
-  onValue(ref(db,gp('planning')), s=>{ planning = s.val()||[]; if(!Array.isArray(planning)) planning=[]; renderPlanning(); });
-  onValue(ref(db,gp('recettes')), s=>{ recettes = s.val()||{}; renderRecettes(); renderPlanning(); });
-  onValue(ref(db,gp('courses')), s=>{ courses = s.val()||{}; renderCourses(); });
+/* Normalise un nom d'ingrédient pour la fusion :
+   supprime les parenthèses et leur contenu, lowercase, trim */
+function normIngName(nom){
+  return nom.toLowerCase().replace(/\s*\(.*?\)\s*/g,'').replace(/\s+/g,' ').trim();
 }
 
-// =============================================
+// ============================================================
+// FIREBASE
+// ============================================================
+function connectDB(){
+  const {db,ref,onValue}=fb();
+  onValue(ref(db,gp('planning')),s=>{
+    const v=s.val();
+    planning = Array.isArray(v)?v:[];
+    renderPlanning(); renderRecettes();
+  });
+  onValue(ref(db,gp('recettes')),s=>{
+    recettes=s.val()||{};
+    renderRecettes(); renderPlanning();
+  });
+  onValue(ref(db,gp('courses')),s=>{
+    courses=s.val()||{};
+    renderCourses();
+  });
+}
+
+// ============================================================
 // NAV
-// =============================================
+// ============================================================
 function switchView(v){
-  currentView = v;
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('.nav-item').forEach((n,i)=>{
     n.classList.toggle('active',['planning','recettes','courses'][i]===v);
   });
 }
-window.switchView = switchView;
+window.switchView=switchView;
 
-// =============================================
+// ============================================================
 // PLANNING
-// =============================================
+// ============================================================
 function renderPlanning(){
-  const el = document.getElementById('plan-list');
+  const el=document.getElementById('plan-list');
   if(!planning.length){
     el.innerHTML=`<div class="empty-msg"><div class="empty-emoji">📅</div><div class="empty-text">Aucune recette au planning.<br>Importe un menu avec 📥</div></div>`;
     return;
   }
-  el.innerHTML = planning.map(rid=>{
-    const r = recettes[rid];
-    if(!r) return '';
-    const col = cardColor(rid);
-    const emoji = cardEmoji(rid);
-    return `<div class="plan-card" onclick="openRecipeModal('${rid}')">
-      <div class="plan-card-color" style="background:${col}">${emoji}</div>
+  el.innerHTML=planning.map(rid=>{
+    const r=recettes[rid]; if(!r) return '';
+    const col=cardColor(rid), em=cardEmoji(rid);
+    return `<div class="plan-card" onclick="openRecipe('${rid}')">
+      <div class="plan-card-color" style="background:${col}">${em}</div>
       <div class="plan-card-info">
         <div class="plan-card-name">${r.nom}</div>
         <div class="plan-card-meta">${r.temps||'?'} min · ${r.personnes||2} pers.</div>
       </div>
-      <button class="plan-card-del" onclick="event.stopPropagation();removeFromPlanning('${rid}')">✕</button>
+      <button class="plan-card-del" onclick="event.stopPropagation();removePlan('${rid}')">✕</button>
     </div>`;
   }).join('');
 }
 
-function removeFromPlanning(rid){
-  const {db,ref,set} = fb();
-  const newPlan = planning.filter(id=>id!==rid);
-  set(ref(db,gp('planning')), newPlan.length ? newPlan : null);
+function removePlan(rid){
+  const {db,ref,set}=fb();
+  const p=planning.filter(id=>id!==rid);
+  set(ref(db,gp('planning')),p.length?p:null);
+  vibrate();
 }
-window.removeFromPlanning = removeFromPlanning;
+window.removePlan=removePlan;
 
-function addToPlanning(rid){
-  const {db,ref,set} = fb();
-  const currentPlan = Array.isArray(planning) ? planning : [];
-  if(currentPlan.includes(rid)){ toast('Déjà dans le planning'); return; }
-  set(ref(db,gp('planning')), [...currentPlan, rid]);
-  toast('Ajouté au planning !');
+function addToPlan(rid){
+  const {db,ref,set}=fb();
+  const cur=Array.isArray(planning)?planning:[];
+  if(cur.includes(rid)){toast('Déjà au planning'); return;}
+  set(ref(db,gp('planning')),[...cur,rid]);
+  toast('Ajouté au planning !'); vibrate();
 }
-window.addToPlanning = addToPlanning;
+window.addToPlan=addToPlan;
 
-// =============================================
-// IMPORT MENU
-// =============================================
-function openImportMenu(){
+// ============================================================
+// IMPORT
+// ============================================================
+function openImport(){
   document.getElementById('import-json').value='';
   document.getElementById('import-result').textContent='';
   document.getElementById('modal-import').classList.add('show');
 }
-window.openImportMenu = openImportMenu;
+window.openImport=openImport;
 
-function doImportMenu(){
-  const raw = document.getElementById('import-json').value.trim();
-  const res = document.getElementById('import-result');
-  if(!raw){ res.textContent='Colle du JSON !'; res.style.color='var(--red)'; return; }
+function doImport(){
+  const raw=document.getElementById('import-json').value.trim();
+  const res=document.getElementById('import-result');
+  if(!raw){res.textContent='Colle du JSON !';res.style.color='var(--red)';return;}
   try{
-    const data = JSON.parse(raw);
-    const {db,ref,set} = fb();
-    let added = 0;
-    const newPlan = Array.isArray(planning) ? [...planning] : [];
+    const data=JSON.parse(raw);
+    const {db,ref,set}=fb();
+    let added=0;
+    const cur=Array.isArray(planning)?[...planning]:[];
 
-    const jours = data.jours || (Array.isArray(data)?data:[data]);
+    const jours=data.jours||(Array.isArray(data)?data:[data]);
     jours.forEach(j=>{
       ['midi','soir'].forEach(slot=>{
-        const r = j[slot];
-        if(!r||!r.nom) return;
-        const rid = 'r_'+r.nom.toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,40);
+        const r=j[slot]; if(!r||!r.nom) return;
+        const rid='r_'+r.nom.toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,40);
         set(ref(db,gp(`recettes/${rid}`)),{
-          nom:r.nom, temps:r.temps||30, personnes:r.personnes||2,
-          ingredients:r.ingredients||[], etapes:r.etapes||[]
+          nom:r.nom,temps:r.temps||30,personnes:r.personnes||2,
+          ingredients:r.ingredients||[],etapes:r.etapes||[]
         });
-        if(!newPlan.includes(rid)) newPlan.push(rid);
+        if(!cur.includes(rid)) cur.push(rid);
         added++;
       });
     });
 
-    set(ref(db,gp('planning')), newPlan.length?newPlan:null);
+    set(ref(db,gp('planning')),cur.length?cur:null);
     res.style.color='var(--mint)';
     res.textContent=`✅ ${added} recette(s) importée(s) !`;
     setTimeout(()=>closeModal('modal-import'),900);
-  } catch(e){
+  }catch(e){
     res.style.color='var(--red)';
     res.textContent='❌ JSON invalide : '+e.message;
   }
 }
-window.doImportMenu = doImportMenu;
+window.doImport=doImport;
 
-// =============================================
+// ============================================================
 // RECETTES
-// =============================================
+// ============================================================
 function renderRecettes(){
-  const entries = Object.entries(recettes);
-  const el = document.getElementById('recettes-content');
+  const entries=Object.entries(recettes);
+  const el=document.getElementById('recettes-content');
   if(!entries.length){
     el.innerHTML=`<div class="empty-msg"><div class="empty-emoji">📖</div><div class="empty-text">Pas encore de recettes.<br>Importe un menu depuis le planning !</div></div>`;
     return;
   }
-  el.innerHTML=`<div class="recettes-grid">${entries.map(([id,r])=>{
-    const col = cardColor(id);
-    const emoji = cardEmoji(id);
-    return `<div class="rcard" onclick="openRecipeModal('${id}')">
-      <div class="rcard-color" style="background:${col}">${emoji}</div>
+  el.innerHTML=`<div class="recettes-grid">${entries.map(([id,r])=>`
+    <div class="rcard" onclick="openRecipe('${id}')">
+      <div class="rcard-color" style="background:${cardColor(id)}">${cardEmoji(id)}</div>
       <div class="rcard-body">
         <div class="rcard-name">${r.nom}</div>
         <div class="rcard-meta">${r.temps||'?'} min · ${r.personnes||2} pers.</div>
       </div>
-    </div>`;
-  }).join('')}</div>`;
+    </div>`).join('')}</div>`;
 }
 
-// =============================================
+// ============================================================
 // FICHE RECETTE
-// =============================================
-function openRecipeModal(id){
-  currentRecipeId = id;
-  const r = recettes[id];
-  if(!r) return;
-  document.getElementById('rm-name').textContent = r.nom;
-  document.getElementById('rm-meta').textContent = `${r.temps||'?'} min · ${r.personnes||2} personnes`;
+// ============================================================
+function openRecipe(id){
+  const r=recettes[id]; if(!r) return;
+  document.getElementById('rm-name').textContent=r.nom;
+  document.getElementById('rm-meta').textContent=`${r.temps||'?'} min · ${r.personnes||2} personnes`;
+  const inPlan=Array.isArray(planning)&&planning.includes(id);
 
-  const inPlan = planning.includes(id);
-
-  let html = `<div class="recipe-section-title">🧾 Ingrédients</div>`;
+  let html='<div class="section-title">🧾 Ingrédients</div>';
   (r.ingredients||[]).forEach(ing=>{
-    const qty = ing.qte?`${ing.qte} ${ing.unite||''}`:'';
-    html += `<div class="ing-row"><span class="ing-qty">${qty}</span><span>${ing.nom}</span></div>`;
+    const qty=ing.qte?`${ing.qte} ${ing.unite||''}`:'';
+    html+=`<div class="ing-row"><span class="ing-qty">${qty}</span><span>${ing.nom}</span></div>`;
   });
-
-  html += `<div class="recipe-section-title">👨‍🍳 Préparation</div>`;
+  html+='<div class="section-title">👨‍🍳 Préparation</div>';
   (r.etapes||[]).forEach((e,i)=>{
-    html += `<div class="step-row"><div class="step-num">${i+1}</div><div>${e}</div></div>`;
+    html+=`<div class="step-row"><div class="step-num">${i+1}</div><div>${e}</div></div>`;
   });
-
-  html += `<button class="add-to-plan-btn" onclick="addToPlanning('${id}')">
+  html+=`<button class="plan-add-btn" onclick="addToPlan('${id}')">
     ${inPlan?'✅ Déjà au planning':'📅 Ajouter au planning'}
   </button>`;
-  html += `<button class="cook-btn" onclick="startCookMode('${id}')">🍳 Mode cuisine</button>`;
+  html+=`<button class="cook-launch-btn" onclick="startCook('${id}')">🍳 Mode cuisine</button>`;
 
-  document.getElementById('rm-body').innerHTML = html;
+  document.getElementById('rm-body').innerHTML=html;
   document.getElementById('recipe-modal').classList.add('show');
 }
-window.openRecipeModal = openRecipeModal;
+window.openRecipe=openRecipe;
 
-function closeRecipeModal(){
+function closeRecipe(){
   document.getElementById('recipe-modal').classList.remove('show');
 }
-window.closeRecipeModal = closeRecipeModal;
+window.closeRecipe=closeRecipe;
 
-// =============================================
+// ============================================================
 // MODE CUISINE
-// =============================================
-async function startCookMode(id){
-  cookRecipe = recettes[id];
-  cookStep = 0;
-  closeRecipeModal();
+// ============================================================
+async function startCook(id){
+  cookRecipe=recettes[id]; cookStep=0;
+  closeRecipe();
   document.getElementById('cook-modal').classList.add('show');
-  document.getElementById('cook-name').textContent = cookRecipe.nom;
-  document.getElementById('cook-ings-panel').style.display = 'none';
-
-  // Stopper le timer précédent si actif
+  document.getElementById('cook-name').textContent=cookRecipe.nom;
+  document.getElementById('cook-ings').style.display='none';
   stopTimer();
 
   // Wake Lock
-  try{ wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+  try{ wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
 
-  // Ingrédients panel
-  let ingHtml = '<div style="font-family:var(--title);font-size:14px;color:var(--yellow);margin-bottom:8px;padding-top:8px;">Ingrédients</div>';
+  // Panel ingrédients
+  let ih='<div style="font-family:var(--title);font-size:13px;color:var(--yellow);margin-bottom:8px;padding-top:8px;">Ingrédients</div>';
   (cookRecipe.ingredients||[]).forEach(ing=>{
-    const qty = ing.qte?`${ing.qte} ${ing.unite||''}`:'';
-    ingHtml += `<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-weight:600;font-size:13px;"><span style="color:var(--mint);min-width:60px;">${qty}</span><span>${ing.nom}</span></div>`;
+    const qty=ing.qte?`${ing.qte} ${ing.unite||''}`:'';
+    ih+=`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.07);font-weight:600;font-size:13px;"><span style="color:var(--mint);min-width:60px;">${qty}</span><span>${ing.nom}</span></div>`;
   });
-  document.getElementById('cook-ings-panel').innerHTML = ingHtml;
-
+  document.getElementById('cook-ings').innerHTML=ih;
   renderCookStep();
 }
-window.startCookMode = startCookMode;
+window.startCook=startCook;
 
 function renderCookStep(){
-  const steps = cookRecipe.etapes||[];
-  const total = steps.length;
-  document.getElementById('cook-step-label').textContent = `Étape ${cookStep+1} / ${total}`;
-  document.getElementById('cook-bar-fill').style.width = `${((cookStep+1)/total)*100}%`;
-  document.getElementById('cook-sn').textContent = `ÉTAPE ${cookStep+1}`;
-  document.getElementById('cook-st').textContent = steps[cookStep]||'';
-  document.getElementById('cook-next-btn').textContent = cookStep>=total-1?'✅ Terminer':'Suivant →';
+  const steps=cookRecipe.etapes||[];
+  const total=steps.length;
+  document.getElementById('cook-lbl').textContent=`Étape ${cookStep+1} / ${total}`;
+  document.getElementById('cook-prog').style.width=`${((cookStep+1)/total)*100}%`;
+  document.getElementById('cook-tag').textContent=`ÉTAPE ${cookStep+1}`;
+  document.getElementById('cook-txt').textContent=steps[cookStep]||'';
+  document.getElementById('cook-next').textContent=cookStep>=total-1?'✅ Terminer':'Suivant →';
 
-  // Bouton timer si étape mentionne des minutes
-  const timerArea = document.getElementById('cook-timer-area');
-  const step = steps[cookStep]||'';
-  const tm = step.match(/(\d+)\s*min/i);
-  if(tm && !cookTimerRunning){
-    const mins = parseInt(tm[1]);
-    timerArea.innerHTML = `<button class="cook-timer-btn" onclick="startTimer(${mins*60})">⏱ Timer ${mins} min</button>`;
-  } else if(!cookTimerRunning){
-    timerArea.innerHTML = '';
+  const step=steps[cookStep]||'';
+  const tm=step.match(/(\d+)\s*min/i);
+  const zone=document.getElementById('cook-timer-zone');
+  if(tm&&!timerRunning){
+    const mins=parseInt(tm[1]);
+    zone.innerHTML=`<button class="cook-timer-launch" onclick="startTimer(${mins*60})">⏱ Timer ${mins} min</button>`;
   } else {
-    // Timer actif : on efface le bouton de lancement, la barre du haut montre le timer
-    timerArea.innerHTML = '';
+    zone.innerHTML='';
   }
 }
 
-function cookPrev(){ if(cookStep>0){ cookStep--; renderCookStep(); } }
+function cookPrev(){ if(cookStep>0){cookStep--;renderCookStep();} }
 function cookNext(){
-  const total = (cookRecipe.etapes||[]).length;
-  if(cookStep>=total-1){ closeCookMode(); toast('Bon appétit ! 🎉'); return; }
+  const total=(cookRecipe.etapes||[]).length;
+  if(cookStep>=total-1){closeCook();toast('Bon appétit ! 🎉');return;}
   cookStep++; renderCookStep();
 }
-window.cookPrev = cookPrev;
-window.cookNext = cookNext;
+window.cookPrev=cookPrev; window.cookNext=cookNext;
 
-function toggleCookIngs(){
-  const p = document.getElementById('cook-ings-panel');
-  p.style.display = p.style.display==='none'?'block':'none';
+function toggleIngs(){
+  const el=document.getElementById('cook-ings');
+  el.style.display=el.style.display==='none'?'block':'none';
 }
-window.toggleCookIngs = toggleCookIngs;
+window.toggleIngs=toggleIngs;
 
-function closeCookMode(){
+function closeCook(){
   document.getElementById('cook-modal').classList.remove('show');
   stopTimer();
-  if(wakeLock){ wakeLock.release(); wakeLock=null; }
+  if(wakeLock){wakeLock.release();wakeLock=null;}
 }
-window.closeCookMode = closeCookMode;
+window.closeCook=closeCook;
 
 function startTimer(secs){
   stopTimer();
-  cookTimerSeconds = secs;
-  cookTimerRunning = true;
-  document.getElementById('cook-timer-bar').classList.add('running');
+  timerSecs=secs; timerRunning=true;
+  document.getElementById('timer-strip').classList.add('on');
   updateTimerDisplay();
-  renderCookStep(); // re-render pour cacher le bouton de lancement
-
-  cookTimerInterval = setInterval(()=>{
-    cookTimerSeconds--;
-    if(cookTimerSeconds<=0){
-      cookTimerSeconds=0;
-      cookTimerRunning=false;
+  renderCookStep();
+  timerInterval=setInterval(()=>{
+    timerSecs--;
+    if(timerSecs<=0){
+      timerSecs=0; timerRunning=false;
       updateTimerDisplay();
-      document.getElementById('cook-timer-bar').classList.remove('running');
-      clearInterval(cookTimerInterval);
-      // Bip sonore
+      document.getElementById('timer-strip').classList.remove('on');
+      clearInterval(timerInterval);
+      // Bip double
       try{
         const ac=new AudioContext();
-        const osc=ac.createOscillator(); osc.type='sine'; osc.frequency.value=880;
-        osc.connect(ac.destination); osc.start(); osc.stop(ac.currentTime+0.6);
-        setTimeout(()=>{ const o2=ac.createOscillator(); o2.type='sine'; o2.frequency.value=1100; o2.connect(ac.destination); o2.start(); o2.stop(ac.currentTime+0.4); },400);
+        [0,400].forEach(delay=>setTimeout(()=>{
+          const o=ac.createOscillator();
+          o.type='sine';o.frequency.value=880;
+          o.connect(ac.destination);o.start();o.stop(ac.currentTime+0.4);
+        },delay));
       }catch(e){}
+      vibrate([60,80,120]);
       toast('⏱ Timer terminé !');
       renderCookStep();
       return;
@@ -870,92 +997,92 @@ function startTimer(secs){
     updateTimerDisplay();
   },1000);
 }
-window.startTimer = startTimer;
+window.startTimer=startTimer;
 
 function stopTimer(){
-  clearInterval(cookTimerInterval);
-  cookTimerRunning = false;
-  cookTimerSeconds = 0;
-  const bar = document.getElementById('cook-timer-bar');
-  if(bar) bar.classList.remove('running');
+  clearInterval(timerInterval);
+  timerRunning=false; timerSecs=0;
+  const strip=document.getElementById('timer-strip');
+  if(strip) strip.classList.remove('on');
 }
-window.stopTimer = stopTimer;
+window.stopTimer=stopTimer;
 
 function updateTimerDisplay(){
-  const m = Math.floor(cookTimerSeconds/60);
-  const s = cookTimerSeconds%60;
-  const str = `${m}:${s.toString().padStart(2,'0')}`;
-  const el = document.getElementById('cook-timer-bar-count');
-  if(el) el.textContent = str;
+  const m=Math.floor(timerSecs/60), s=timerSecs%60;
+  const el=document.getElementById('timer-num');
+  if(el) el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
 }
 
-// =============================================
+// ============================================================
 // COURSES
-// =============================================
+// ============================================================
 async function loadIngredients(){
   try{
-    const res = await fetch('ingredients_FINAL.json');
-    const data = await res.json();
-    INGREDIENTS = data.map(a=>({id:a[0],nom:a[1],rayon:a[6],unites:a[7]||['pièce']}));
-  }catch(e){ INGREDIENTS=[]; }
+    const res=await fetch('ingredients_FINAL.json');
+    const data=await res.json();
+    INGREDIENTS=data.map(a=>({id:a[0],nom:a[1],rayon:a[6],unites:a[7]||['pièce']}));
+  }catch(e){INGREDIENTS=[];}
 }
 
 function generateCourses(){
-  const {db,ref,set} = fb();
-  let toAdd = [];
-  planning.forEach(rid=>{
-    const r = recettes[rid];
-    if(!r||!r.ingredients) return;
-    r.ingredients.forEach(ing=>{
-      toAdd.push({nom:ing.nom,qte:ing.qte||1,unite:ing.unite||'pièce',rayon:ing.rayon,source:r.nom});
-    });
+  const {db,ref,set}=fb();
+  let toAdd=[];
+  (Array.isArray(planning)?planning:[]).forEach(rid=>{
+    const r=recettes[rid]; if(!r||!r.ingredients) return;
+    r.ingredients.forEach(ing=>toAdd.push({
+      nom:ing.nom,qte:ing.qte||1,unite:ing.unite||'pièce',rayon:ing.rayon
+    }));
   });
-  if(!toAdd.length){ toast('Aucune recette dans le planning'); return; }
+  if(!toAdd.length){toast('Aucune recette dans le planning');return;}
 
-  // Fusionner
-  const merged = {};
+  // Fusion avec normalisation du nom (ignore parenthèses)
+  const merged={};
   toAdd.forEach(it=>{
-    const key = it.nom.toLowerCase()+'|'+it.unite;
-    if(merged[key]){ merged[key].qte += it.qte; }
-    else{
-      let rayon = it.rayon;
+    const key=normIngName(it.nom)+'|'+it.unite;
+    if(merged[key]){
+      merged[key].qte+=it.qte;
+    }else{
+      let rayon=it.rayon;
       if(typeof rayon!=='number'){
-        const f = INGREDIENTS.find(i=>i.nom.toLowerCase()===it.nom.toLowerCase());
-        rayon = f?f.rayon:8;
+        const f=INGREDIENTS.find(i=>normIngName(i.nom)===normIngName(it.nom));
+        rayon=f?f.rayon:8;
       }
-      merged[key]={nom:it.nom,qte:it.qte,unite:it.unite,rayon,checked:false};
+      // Nom canonique = premier nom vu, sans parenthèses
+      const canonNom=it.nom.replace(/\s*\(.*?\)\s*/g,'').trim();
+      merged[key]={nom:canonNom,qte:it.qte,unite:it.unite,rayon,checked:false};
     }
   });
 
   // Fusionner avec existant
   Object.values(merged).forEach(it=>{
-    const ex = Object.entries(courses).find(([id,c])=>
-      c.nom.toLowerCase()===it.nom.toLowerCase()&&c.unite===it.unite&&!c.checked
+    const ex=Object.entries(courses).find(([,c])=>
+      normIngName(c.nom)===normIngName(it.nom)&&c.unite===it.unite&&!c.checked
     );
     if(ex){
       const [eid,ec]=ex;
       ec.qte=(ec.qte||0)+it.qte;
       set(ref(db,gp(`courses/${eid}`)),ec);
-    } else {
-      const id='c'+Date.now()+Math.floor(Math.random()*1000);
+    }else{
+      const id='c'+Date.now()+Math.floor(Math.random()*999);
       set(ref(db,gp(`courses/${id}`)),it);
     }
   });
 
   toast(`${Object.keys(merged).length} articles ajoutés !`);
+  vibrate();
   switchView('courses');
 }
-window.generateCourses = generateCourses;
+window.generateCourses=generateCourses;
 
 function renderCourses(){
-  const entries = Object.entries(courses);
-  const total = entries.length;
-  const checked = entries.filter(([,c])=>c.checked).length;
-  document.getElementById('c-progress').style.width = total?`${(checked/total)*100}%`:'0%';
-  document.getElementById('c-progress-label').textContent = `${checked} / ${total} articles`;
-  document.getElementById('fab-clear-wrap').style.display = checked>0?'block':'none';
+  const entries=Object.entries(courses);
+  const total=entries.length;
+  const checked=entries.filter(([,c])=>c.checked).length;
+  document.getElementById('prog-fill').style.width=total?`${(checked/total)*100}%`:'0%';
+  document.getElementById('prog-label').textContent=`${checked} / ${total} articles`;
+  document.getElementById('fab-clear').style.display=checked>0?'block':'none';
 
-  const listEl = document.getElementById('courses-list');
+  const listEl=document.getElementById('courses-list');
   if(!total){
     listEl.innerHTML=`<div class="empty-msg"><div class="empty-emoji">🛒</div><div class="empty-text">Liste vide !<br>Génère-la depuis le planning.</div></div>`;
     return;
@@ -976,21 +1103,60 @@ function renderCourses(){
     html+=`<div class="rayon-group"><div class="rayon-title">${r.emoji} ${r.nom}</div>`;
     items.forEach(it=>{
       const qd=`${it.qte%1===0?it.qte:parseFloat(it.qte.toFixed(1))} ${it.unite}`;
-      html+=`<div class="course-item ${it.checked?'checked':''}">
-        <div class="ci-bar" style="background:${r.color}"></div>
-        <div class="ci-check ${it.checked?'checked':''}" onclick="toggleCourse('${it.id}')">
-          ${it.checked?'<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>':''}
+      html+=`<div class="ci-wrap">
+        <div class="ci-swipe-bg">🗑</div>
+        <div class="course-item ${it.checked?'checked':''}" id="ci-${it.id}">
+          <div class="ci-bar" style="background:${r.color}"></div>
+          <div class="ci-check ${it.checked?'checked':''}" onclick="toggleCourse('${it.id}')">
+            ${it.checked?'<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 6.5L5.5 9.5L10.5 3.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+          </div>
+          <div class="ci-info" onclick="openQty('${it.id}')">
+            <div class="ci-name">${it.nom}</div>
+            <div class="ci-qty">${qd}</div>
+          </div>
+          <button class="ci-del" onclick="delCourse('${it.id}')">✕</button>
         </div>
-        <div class="ci-info" onclick="openQtyModal('${it.id}')">
-          <div class="ci-name">${it.nom}</div>
-          <div class="ci-qty">${qd}</div>
-        </div>
-        <button class="ci-del" onclick="delCourse('${it.id}')">✕</button>
       </div>`;
     });
     html+=`</div>`;
   });
   listEl.innerHTML=html;
+  attachSwipe();
+}
+
+/* Swipe to delete */
+function attachSwipe(){
+  document.querySelectorAll('.ci-wrap').forEach(wrap=>{
+    const item=wrap.querySelector('.course-item');
+    if(!item) return;
+    const id=item.id.replace('ci-','');
+    let startX=0, curX=0, swiping=false;
+    const THRESHOLD=80;
+
+    item.addEventListener('touchstart',e=>{
+      startX=e.touches[0].clientX; curX=startX; swiping=true;
+    },{passive:true});
+    item.addEventListener('touchmove',e=>{
+      if(!swiping) return;
+      curX=e.touches[0].clientX;
+      const dx=startX-curX;
+      if(dx>0) item.style.transform=`translateX(${-Math.min(dx,THRESHOLD+10)}px)`;
+    },{passive:true});
+    item.addEventListener('touchend',()=>{
+      if(!swiping) return; swiping=false;
+      const dx=startX-curX;
+      if(dx>=THRESHOLD){
+        item.style.transition='transform .25s ease,opacity .25s';
+        item.style.transform='translateX(-100%)';
+        item.style.opacity='0';
+        setTimeout(()=>delCourse(id),250);
+      } else {
+        item.style.transition='transform .2s ease';
+        item.style.transform='';
+        setTimeout(()=>item.style.transition='',300);
+      }
+    });
+  });
 }
 
 function toggleCourse(id){
@@ -998,6 +1164,7 @@ function toggleCourse(id){
   courses[id].checked=!courses[id].checked;
   const {db,ref,set}=fb();
   set(ref(db,gp(`courses/${id}`)),courses[id]);
+  vibrate(20);
 }
 window.toggleCourse=toggleCourse;
 
@@ -1007,128 +1174,124 @@ function delCourse(id){
 }
 window.delCourse=delCourse;
 
-function clearCheckedCourses(){
+function clearChecked(){
   const {db,ref,remove}=fb();
-  Object.entries(courses).forEach(([id,c])=>{ if(c.checked) remove(ref(db,gp(`courses/${id}`))); });
+  Object.entries(courses).forEach(([id,c])=>{if(c.checked)remove(ref(db,gp(`courses/${id}`)));});
   toast('Articles cochés retirés');
 }
-window.clearCheckedCourses=clearCheckedCourses;
+window.clearChecked=clearChecked;
 
 function confirmClearAll(){
   document.getElementById('modal-confirm').classList.add('show');
 }
 window.confirmClearAll=confirmClearAll;
 
-function clearAllCourses(){
+function clearAll(){
   const {db,ref,remove}=fb();
   remove(ref(db,gp('courses')));
   closeModal('modal-confirm');
   toast('Liste vidée');
 }
-window.clearAllCourses=clearAllCourses;
+window.clearAll=clearAll;
 
-// Ajout manuel courses
+// Autocomplete
 function onCoursesInput(){
-  const q=document.getElementById('courses-search').value.toLowerCase().trim();
+  const q=document.getElementById('courses-input').value.toLowerCase().trim();
   const ac=document.getElementById('courses-ac');
-  if(q.length<2||!INGREDIENTS.length){ ac.classList.remove('show'); return; }
-  const matches=INGREDIENTS.filter(i=>i.nom.toLowerCase().includes(q))
-    .sort((a,b)=>a.nom.toLowerCase().startsWith(q)?-1:1).slice(0,6);
-  if(!matches.length){ ac.classList.remove('show'); return; }
-  ac.innerHTML=matches.map(m=>{
-    const r=RAYONS[m.rayon]||RAYONS[8];
-    return `<div class="ac-item" onclick="pickCourseIng('${m.id}')">
-      <span class="ac-dot" style="background:${r.color}"></span>${m.nom}
+  if(q.length<2||!INGREDIENTS.length){ac.classList.remove('show');return;}
+  const m=INGREDIENTS.filter(i=>i.nom.toLowerCase().includes(q))
+    .sort((a,b)=>a.nom.toLowerCase().startsWith(q)?-1:1).slice(0,7);
+  if(!m.length){ac.classList.remove('show');return;}
+  ac.innerHTML=m.map(ing=>{
+    const r=RAYONS[ing.rayon]||RAYONS[8];
+    return `<div class="ac-item" onclick="pickIng('${ing.id}')">
+      <span class="ac-dot" style="background:${r.color}"></span>${ing.nom}
     </div>`;
   }).join('');
   ac.classList.add('show');
 }
 window.onCoursesInput=onCoursesInput;
 
-function pickCourseIng(ingId){
-  const ing=INGREDIENTS.find(i=>i.id===ingId);
-  if(!ing) return;
+function pickIng(ingId){
+  const ing=INGREDIENTS.find(i=>i.id===ingId); if(!ing) return;
   addCourseItem(ing.nom,1,ing.unites[0]||'pièce',ing.rayon);
-  document.getElementById('courses-search').value='';
+  document.getElementById('courses-input').value='';
   document.getElementById('courses-ac').classList.remove('show');
 }
-window.pickCourseIng=pickCourseIng;
+window.pickIng=pickIng;
 
 function addCourseManual(){
-  const raw=document.getElementById('courses-search').value.trim();
-  if(!raw) return;
+  const raw=document.getElementById('courses-input').value.trim(); if(!raw) return;
   let qte=1,unite='pièce',nom=raw;
-  const m=raw.match(/^(\d+[.,]?\d*)\s*(kg|g|l|ml|pièces?|paquets?|boîtes?)?\s+(.+)$/i);
-  if(m){ qte=parseFloat(m[1].replace(',','.')); unite=m[2]||'pièce'; nom=m[3]; }
-  const f=INGREDIENTS.find(i=>i.nom.toLowerCase()===nom.toLowerCase());
+  const m=raw.match(/^(\d+[.,]?\d*)\s*(kg|g|l|ml|pièces?|paquets?|boîtes?|cc|cas)?\s+(.+)$/i);
+  if(m){qte=parseFloat(m[1].replace(',','.'));unite=m[2]||'pièce';nom=m[3];}
+  const f=INGREDIENTS.find(i=>normIngName(i.nom)===normIngName(nom));
   addCourseItem(nom,qte,unite,f?f.rayon:8);
-  document.getElementById('courses-search').value='';
+  document.getElementById('courses-input').value='';
   document.getElementById('courses-ac').classList.remove('show');
 }
 window.addCourseManual=addCourseManual;
 
 function addCourseItem(nom,qte,unite,rayon){
   const {db,ref,set}=fb();
-  const ex=Object.entries(courses).find(([id,c])=>
-    c.nom.toLowerCase()===nom.toLowerCase()&&c.unite===unite&&!c.checked
+  const ex=Object.entries(courses).find(([,c])=>
+    normIngName(c.nom)===normIngName(nom)&&c.unite===unite&&!c.checked
   );
   if(ex){
     const [eid,ec]=ex;
     ec.qte=(ec.qte||0)+qte;
     set(ref(db,gp(`courses/${eid}`)),ec);
-    toast(`${nom} mis à jour`);
-    return;
+    toast(`${nom} mis à jour`); return;
   }
-  const id='c'+Date.now()+Math.floor(Math.random()*1000);
+  const id='c'+Date.now()+Math.floor(Math.random()*999);
   set(ref(db,gp(`courses/${id}`)),{
     nom:nom.charAt(0).toUpperCase()+nom.slice(1),
     qte,unite,rayon:rayon??8,checked:false
   });
-  toast(`${nom} ajouté`);
+  toast(`${nom} ajouté`); vibrate(20);
 }
 
-function openQtyModal(id){
-  editingQtyId=id;
-  const c=courses[id];
-  document.getElementById('qty-title').textContent=c.nom;
-  document.getElementById('qty-value').value=c.qte;
+function openQty(id){
+  editQtyId=id;
+  const c=courses[id]; if(!c) return;
+  document.getElementById('qty-nom').textContent=c.nom;
+  document.getElementById('qty-val').value=c.qte;
   document.getElementById('qty-unit').value=c.unite;
   document.getElementById('modal-qty').classList.add('show');
 }
-window.openQtyModal=openQtyModal;
+window.openQty=openQty;
 
 function saveQty(){
-  if(!editingQtyId||!courses[editingQtyId]) return;
-  const v=parseFloat(document.getElementById('qty-value').value.replace(',','.'));
+  if(!editQtyId||!courses[editQtyId]) return;
+  const v=parseFloat(document.getElementById('qty-val').value.replace(',','.'));
   const u=document.getElementById('qty-unit').value.trim()||'pièce';
   if(!isNaN(v)){
-    courses[editingQtyId].qte=v;
-    courses[editingQtyId].unite=u;
+    courses[editQtyId].qte=v; courses[editQtyId].unite=u;
     const {db,ref,set}=fb();
-    set(ref(db,gp(`courses/${editingQtyId}`)),courses[editingQtyId]);
+    set(ref(db,gp(`courses/${editQtyId}`)),courses[editQtyId]);
   }
   closeModal('modal-qty');
 }
 window.saveQty=saveQty;
 
-// =============================================
+// ============================================================
 // ONBOARDING
-// =============================================
+// ============================================================
 function joinGroup(){
   const p=document.getElementById('ob-pseudo').value.trim();
   const c=document.getElementById('ob-code').value.trim().toUpperCase();
-  if(!p||!c){ toast('Remplis les deux champs'); return; }
+  if(!p||!c){toast('Remplis les deux champs');return;}
   pseudo=p; groupCode=c;
-  localStorage.setItem('km2_pseudo',p);
-  localStorage.setItem('km2_group',c);
+  localStorage.setItem('km_pseudo',p);
+  localStorage.setItem('km_group',c);
   document.getElementById('onboarding').classList.add('hidden');
   initApp();
 }
 window.joinGroup=joinGroup;
 
-// =============================================
+// ============================================================
 // INIT
-// =============================================
+// ============================================================
 async function initApp(){
   await loadIngredients();
   if(window._fbOK) connectDB();
@@ -1136,7 +1299,8 @@ async function initApp(){
 }
 
 document.addEventListener('click',e=>{
-  if(!e.target.closest('.courses-header-bar')) document.getElementById('courses-ac').classList.remove('show');
+  if(!e.target.closest('.courses-bar'))
+    document.getElementById('courses-ac').classList.remove('show');
 });
 
 if(pseudo&&groupCode){
